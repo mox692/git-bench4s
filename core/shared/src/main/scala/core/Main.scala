@@ -40,7 +40,7 @@ object Main extends IOApp.Simple {
 
     resources.use { case (g, b, p) =>
       p.stdout
-        .through(fs.text.utf8.decode)
+        .through(fs2.text.utf8.decode)
         .compile
         .string
         .flatMap(IO.println(_))

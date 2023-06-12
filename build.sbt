@@ -7,6 +7,8 @@ val Scala3 = "3.2.2"
 
 val catsEffectVersion = "3.5.0"
 val fs2Version = "3.7.0"
+val catsEffectTestingSpecsVersion = "1.5.0"
+val munitCatsEffectVersion = "2.0.0-M1"
 
 ThisBuild / crossScalaVersions := Seq(Scala3, Scala213, Scala213)
 
@@ -38,7 +40,9 @@ lazy val core =
       libraryDependencies ++= Seq(
         "org.typelevel" %% "cats-effect" % catsEffectVersion,
         "co.fs2" %% "fs2-core" % fs2Version,
-        "co.fs2" %% "fs2-io" % fs2Version
+        "co.fs2" %% "fs2-io" % fs2Version,
+        "org.typelevel" %% "cats-effect-testing-specs2" % catsEffectTestingSpecsVersion % Test,
+        "org.typelevel" %%% "munit-cats-effect" % munitCatsEffectVersion % "test"
       )
     )
 
