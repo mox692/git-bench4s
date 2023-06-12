@@ -3,6 +3,7 @@ package core
 import cats.effect._
 import fs2.io.process._
 import fs2.io.file.Files
+import fs2.io.file.Path
 
 object Main extends IOApp.Simple {
   override def run: IO[Unit] = {
@@ -30,7 +31,7 @@ object Main extends IOApp.Simple {
     //
 
     val resources =
-      Git.mkGit[IO].flatMap { g =>
+      Git.mkGit[IO](Path(".")).flatMap { g =>
         Bench.mkBench[IO].flatMap { b =>
           ProcessBuilder.apply("git", "diff", "--name-only").spawn[IO].flatMap { p =>
             Resource.pure((g, b, p))

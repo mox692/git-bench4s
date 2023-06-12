@@ -1,9 +1,11 @@
 package core
 
 import cats.effect.Resource
-import cats.MonadError
+import cats.effect.kernel.Sync
 import cats.syntax.all._
 import fs2.io.process._
+import fs2.io.file.Path
+import java.lang.Runtime
 
 class Git[F[_]] {
   def lastCommit(): F[String] = ???
@@ -14,19 +16,28 @@ class Git[F[_]] {
 }
 
 object Git {
-  private def isInitialized[F[_]](implicit F: MonadError[F, Throwable]): F[Boolean] =
-    // check
-    MonadError[F, Throwable].pure(true)
+  private def isInitialized[F[_]: Processes](workDir: Path)(implicit F: Sync[F]): F[Boolean] =
+    ProcessBuilder
+      .apply("find", workDir.toString, "-maxdepth", "1", "-type", "f", "-name", "'.git'")
+      .withWorkingDirectory(workDir)
+      .spawn[F]
+      .use {
+        _.stdout
+          .through(fs2.text.utf8.decode)
+          .compile
+          .string
+          .map(_.nonEmpty)
+      }
 
-  def mkGit[F[_]](implicit F: MonadError[F, Throwable]): Resource[F, Git[F]] =
+  def mkGit[F[_]: Processes](workDir: Path)(implicit F: Sync[F]): Resource[F, Git[F]] =
     for {
       git <- Resource.make {
-        isInitialized[F].ifM(
-          MonadError[F, Throwable].pure(new Git[F] {}),
-          MonadError[F, Throwable].raiseError(
+        isInitialized[F](workDir).ifM(
+          Sync[F].pure(new Git[F] {}),
+          Sync[F].raiseError(
             new RuntimeException("git is not initialized.")
           )
         )
-      }(_ => MonadError[F, Throwable].pure(()))
+      }(_ => Sync[F].pure(()))
     } yield git
 }
