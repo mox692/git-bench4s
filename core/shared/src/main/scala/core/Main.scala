@@ -11,24 +11,39 @@ object Main extends IOApp.Simple {
     //     git commandがあるか？
     //     実行dirに.gitがあるか？
     //   benchmarkfileを確認
+    //     jmh-pluginがあるか、bench fileがあるか
     //     ファイル数に応じて、並列に実行したい(そういうことってできるっけ？ なるべくsbtに依存したくない)
+    //   process
     //
-    // actionの実行
-    //   benchmarkをparallelに実行
+    // 実際にbenchのロジック
+    //   resourceがokだったら, fork processを作成して下記を行う
+    //     作業用dirを作成して、cdする
+    //     所定のcommitにcheckout
+    //     benchmarkを走らせる
+    //     後の比較のために結果を保存
+    //   親processは、本体でbenchmarkを走らせる
+    //     結果を保存
+    //   2つのbenchmarkの結果を比較する
+    //     結果が悪化していたらalert
+    //
+    //
+    //
 
-    val resource =
+    val resources =
       Git.mkGit[IO].flatMap { g =>
-        Bench.mkBench[IO].flatMap(b => Resource.pure((g, b)))
+        Bench.mkBench[IO].flatMap { b =>
+          ProcessBuilder.apply("git", "diff", "--name-only").spawn[IO].flatMap { p =>
+            Resource.pure((g, b, p))
+          }
+        }
       }
 
-    resource.use { case (g, b) =>
-      ProcessBuilder.apply("git", "diff", "--name-only").spawn[IO].use[Unit] { process =>
-        process.stdout
-          .through(fs2.text.utf8.decode)
-          .compile
-          .string
-          .flatMap(IO.println(_))
-      }
+    resources.use { case (g, b, p) =>
+      p.stdout
+        .through(fs.text.utf8.decode)
+        .compile
+        .string
+        .flatMap(IO.println(_))
     }
   }
 }
