@@ -16,9 +16,9 @@ class Git[F[_]] {
 }
 
 object Git {
-  private def isInitialized[F[_]: Processes](workDir: Path)(implicit F: Sync[F]): F[Boolean] =
+  private[core] def isInitialized[F[_]: Processes](workDir: Path)(implicit F: Sync[F]): F[Boolean] =
     ProcessBuilder
-      .apply("find", workDir.toString, "-maxdepth", "1", "-type", "f", "-name", "'.git'")
+      .apply("find", workDir.toString, "-maxdepth", "1", "-name", ".git")
       .withWorkingDirectory(workDir)
       .spawn[F]
       .use {
@@ -29,7 +29,9 @@ object Git {
           .map(_.nonEmpty)
       }
 
-  def mkGit[F[_]: Processes](workDir: Path)(implicit F: Sync[F]): Resource[F, Git[F]] =
+  private[core] def mkGit[F[_]: Processes](
+      workDir: Path
+  )(implicit F: Sync[F]): Resource[F, Git[F]] =
     for {
       git <- Resource.make {
         isInitialized[F](workDir).ifM(
