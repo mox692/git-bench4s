@@ -10,6 +10,9 @@ val fs2Version = "3.7.0"
 val catsEffectTestingSpecsVersion = "1.5.0"
 val munitCatsEffectVersion = "2.0.0-M1"
 
+// ignore files
+unmanagedSources / excludeFilter := HiddenFileFilter || "DummyBenchmark.scala"
+
 ThisBuild / crossScalaVersions := Seq(Scala3, Scala213, Scala213)
 
 enablePlugins(ScalaNativePlugin)

@@ -12,21 +12,24 @@ class Bench[F[_]](
 ) {}
 
 object Bench {
-  def mkBench[F[_]: Async](): Resource[F, Bench[F]] =
+  def mkBench[F[_]: Async](workDir: Path): Resource[F, Bench[F]] =
     Resource.make[F, Bench[F]] {
 
       val s1 = Files[F]
         .readAll(
-          Path.apply(".") / "project" / "plugins.sbt"
+          workDir / "project" / "plugins.sbt"
         )
         .through(fs2.text.utf8.decode)
         .filter(_.contains("sbt-jmh"))
-        .ifEmpty(
-          Stream.raiseError[F](new RuntimeException("jmh plugin not found"))
-        )
+        .handleErrorWith(t => Stream.raiseError[F](new RuntimeException("jmh plugin not found")))
 
       val s2 = Files[F]
-        .walk(Path.apply("."))
+        .walk(workDir)
+        .evalFilter { path =>
+          Files[F]
+            .isDirectory(path)
+            .map(!_)
+        }
         .flatMap { path =>
           Files[F]
             .readAll(path)
@@ -36,7 +39,7 @@ object Bench {
         .filter { case (path, content) =>
           content.contains("@Benchmark")
         }
-        .ifEmpty(
+        .handleErrorWith(t =>
           Stream.raiseError[F](new RuntimeException("benchmark files not found"))
         )
 

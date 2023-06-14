@@ -47,13 +47,13 @@ class GitSuite extends CatsEffectSuite {
     }
   }
 
-  test("Git.isInitialized method should success where there is a .git directory") {
+  test("Git.mkGit method should success where there is a .git directory") {
     runGitDir { path =>
       Git.mkGit[IO](path).use(_ => IO.unit).void.assertEquals(())
     }
   }
 
-  test("Git.isInitialized method should fail where there is no .git directory") {
+  test("Git.mkGit method should fail where there is no .git directory") {
     runNoGitDir { path =>
       Git
         .mkGit[IO](path)

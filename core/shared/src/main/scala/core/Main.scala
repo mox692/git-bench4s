@@ -30,9 +30,11 @@ object Main extends IOApp.Simple {
     //
     //
 
+    val workDir = Path(".")
+
     val resources =
-      Git.mkGit[IO](Path(".")).flatMap { g =>
-        Bench.mkBench[IO].flatMap { b =>
+      Git.mkGit[IO](workDir).flatMap { g =>
+        Bench.mkBench[IO](workDir).flatMap { b =>
           ProcessBuilder.apply("git", "diff", "--name-only").spawn[IO].flatMap { p =>
             Resource.pure((g, b, p))
           }
