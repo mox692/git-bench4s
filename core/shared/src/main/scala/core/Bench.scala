@@ -17,7 +17,7 @@ object Bench {
 
       val s1 = Files[F]
         .readAll(
-          Path.apply(".") / "project" / ""
+          Path.apply(".") / "project" / "plugins.sbt"
         )
         .through(fs2.text.utf8.decode)
         .filter(_.contains("sbt-jmh"))
